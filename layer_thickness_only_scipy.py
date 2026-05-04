@@ -1,16 +1,21 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import lmfit as lm
 import glob
 import copy
 import scipy as sp
 import uncertainties
+import json
+
 
 path = r"C:\Users\Mika Music\Nextcloud\Data\#AFM\20260428\x\facet tilt"
 intervall_radius = 5
 slope_threshold = 1e-9
 
+def linear(x, a, b):
+    return a * x + b
+
+result_dict = dict()
 
 for path in glob.glob(os.path.join(path, "*.txt")):
     scan = np.genfromtxt(path, delimiter="\t")
@@ -39,11 +44,9 @@ for path in glob.glob(os.path.join(path, "*.txt")):
                 stop = i+intervall_radius
                 intervall = line[start:stop]
             x = np.arange(len(intervall))
-            mod = lm.models.LinearModel()
-            params = mod.guess(intervall, x=x)
-            fit = mod.fit(intervall, params=params, x=x)
-            fit_slope = fit.params['slope'].value
-            slope_array.append(fit_slope)
+            slope, _ = sp.optimize.curve_fit(linear, x, intervall)
+            slope_array.append(slope[0])
+
 
         for i, slope in enumerate(slope_array):
             if i+1 > len(slope_array)-1:
@@ -90,6 +93,13 @@ for path in glob.glob(os.path.join(path, "*.txt")):
     stat_err = np.sqrt(1 / np.sum(weights))
     total_err = np.sqrt(stat_err ** 2 + scatter_err ** 2)
 
-    layer_thickness = uncertainties.ufloat(layer_thickness_mean, total_err)
+    result = {
+        "layer_thickness": layer_thickness_mean,
+        "error": total_err
+    }
+    result_dict[os.path.basename(path)] = result
 
-    print(layer_thickness)
+    print(f"{os.path.basename(path)}:\n\tlayer thickness = {layer_thickness_mean} +/- {total_err}")
+
+with open(f"{os.path.join(os.path.dirname(path), "layer_tickness.json")}", "w") as f:
+    json.dump(result_dict, f)
