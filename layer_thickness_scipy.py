@@ -5,24 +5,24 @@ import glob
 import copy
 import scipy as sp
 import uncertainties
-import json
 
 
-path = r"C:\Users\Mika Music\Nextcloud\Data\#AFM\20260428\x\facet tilt"
+folder_path = r"C:\Users\Mika Music\Nextcloud\Data\#AFM\260505\layer height"
 intervall_radius = 5
-slope_threshold = 1e-9
+slope_threshold = 5e-9
 
 def linear(x, a, b):
     return a * x + b
 
-result_dict = dict()
+result_array = []
 
-for path in glob.glob(os.path.join(path, "*.txt")):
+for path in glob.glob(os.path.join(folder_path, "*.txt")):
     scan = np.genfromtxt(path, delimiter="\t")
     if scan.shape[0] > scan.shape[1]:
         scan = scan.T
 
     layer_thickness_array_uncertainties = []
+    file_name = os.path.basename(path)
 
     for j in range(scan.shape[0]):
         line = scan[j]
@@ -73,7 +73,7 @@ for path in glob.glob(os.path.join(path, "*.txt")):
         plt.plot(cleand_line)
         plt.plot(np.arange(len(line)), np.full(len(line), top_level_median))
         plt.plot(np.arange(len(line)), np.full(len(line), bottom_level_median))
-        plt.title(f"{os.path.basename(path)}: line {j}")
+        plt.title(f"{file_name}: line {j}")
         plt.xlabel("measurement point [1]")
         plt.ylabel("height [m]")
         plt.show()
@@ -93,13 +93,9 @@ for path in glob.glob(os.path.join(path, "*.txt")):
     stat_err = np.sqrt(1 / np.sum(weights))
     total_err = np.sqrt(stat_err ** 2 + scatter_err ** 2)
 
-    result = {
-        "layer_thickness": layer_thickness_mean,
-        "error": total_err
-    }
-    result_dict[os.path.basename(path)] = result
+    result = [file_name, layer_thickness_mean, total_err]
+    result_array.append(result)
 
-    print(f"{os.path.basename(path)}:\n\tlayer thickness = {layer_thickness_mean} +/- {total_err}")
+    print(f"{file_name}:\n\tlayer thickness = {layer_thickness_mean} +/- {total_err}")
 
-with open(f"{os.path.join(os.path.dirname(path), "layer_tickness.json")}", "w") as f:
-    json.dump(result_dict, f)
+np.savetxt(os.path.join(folder_path,"layer_tickness.csv"),np.array(result_array), delimiter=",", header="file name, layer thickness, error", fmt="%s")
