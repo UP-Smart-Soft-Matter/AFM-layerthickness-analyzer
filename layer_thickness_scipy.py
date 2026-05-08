@@ -7,7 +7,7 @@ import scipy as sp
 import uncertainties
 
 
-folder_path = r"C:\Users\Mika Music\Nextcloud\Data\#AFM\260505\layer height"
+folder_path = r"C:\Users\Mika\Nextcloud\Data\#AFM\260507\layer thickness"
 intervall_radius = 5
 slope_threshold = 5e-9
 
@@ -98,4 +98,4 @@ for path in glob.glob(os.path.join(folder_path, "*.txt")):
 
     print(f"{file_name}:\n\tlayer thickness = {layer_thickness_mean} +/- {total_err}")
 
-np.savetxt(os.path.join(folder_path,"layer_tickness.csv"),np.array(result_array), delimiter=",", header="file name, layer thickness, error", fmt="%s")
+np.savetxt(os.path.join(folder_path,"layer_tickness.csv"),np.array(result_array), delimiter=",", header="file name,layer thickness,error", fmt="%s")
